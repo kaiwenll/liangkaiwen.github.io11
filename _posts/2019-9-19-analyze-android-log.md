@@ -2,7 +2,7 @@
 
 ### 设置点击关于进程挂掉
 
-```log
+```java
 root@p201_iptv:/ # logcat -c ; logcat | grep 6940
 D/SWSystemService( 6940): [20190918223328776][net.sunniwell.setting.jx.service.SWSystemService][handleScreenSave][204]:-----screen save time-----1 
 D/ContextImpl( 6940): cls name is:net.sunniwell.setting.jx.ui.AboutActivity
