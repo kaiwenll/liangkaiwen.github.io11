@@ -24,10 +24,6 @@ name 属性与该 project 的 remote 属性（及 xml 中该 rem
 
 ***
 
-### **常用命令**
-
-***
-
 #### repo sync
 同步最新本地工作文件，更新成功，这本地文件和 server 的代码是一样的。可以指定需要更新的project ，如果不指定任何参数，会同步整个所有的项目。
 如果是第一次运行 repo sync ，则这个命令相当于 git clone，会把server所有内容都拷贝到本地。
@@ -47,7 +43,7 @@ xml分支：通过清单文件manifest.xml中的default实体的revision属性�
 
 ***
 
-#### 代码提交
+### 代码提交
 
 ```
 git add -A
@@ -65,7 +61,7 @@ git push origin master
 
 ***
 
-##### 撤销commit
+### **撤销commit**
 
 **情境1：**有的时候你只需要撤销commit，但并不想将commit下的代码也撤销，那么可以先找到你的最新的commit号
 
@@ -160,4 +156,110 @@ git reset --hard HEAD^1
 > + ***pubilc-project*** 公共仓库增加的只有我这个项目针对公共仓库的变更 针对公共仓库的差异合到 项目仓库 ***repo diffext*** 把公共仓库所有的修改拷贝到 ***on-project*** 项目仓库下面 
 
 ***
+
+### **定制代码合并工具**
+
+1. ***repo merge*** 将小系统代码合并到大系统
+
+   如果项目报了问题，在修改问题时，首先要把小系统的定制代码同步到大系统上，如果项目小系统固定了发布点，还需要同时将大系统代码回退到固定点上。我们使用repo merge命令来完成这个操作：
+
+   ```
+   repo merge [<project>...] [-b <new-branch>] [--copy-only] -i <small-system-rootdir>
+   # 参数介绍：
+   #     project，表示要对指定仓库进行代码回退、合并，比如frameworks/base。如果不带此参数，表示要对整个大系统进行代码回退、合并；
+   #     -b <new-branch>，此参数的含义是新建一个分支，并指向固定点；
+   #     -i <small-system-rootdir> 表示小系统路径（小系统根目录）；
+   #     --copy-only  表示只是将项目定制代码拷贝到大系统，不会checkout到历史节。
+   ```
+
+   ***
+
+2. ***repo diff*** 将修改完成的代码再合并到小系统
+
+   项目问题修改完成后，如果项目固定了发布点，就必须把修改的代码传到小系统上。其他情况，要根据本规范第二节的规定，决定代码是否需要上传到系统。使用repo diff命令把修改完的代码合并到小系统：
+
+
+     ~~~
+   repo diff [<project>...]  -o <small-system-rootdir>
+   # 参数介绍：
+   #	project 同repo merge；
+   #	-o <small-system-rootdir> 小系统根目录的路径；
+     ~~~
+
+   ***
+
+3. ***repo merge 和 repo diff*** 使用介绍
+
+   repo merge和repo diff两个命令依赖于大系统仓库根目录下的.repo/repo里面的代码。如果这个仓库代码不是最新的，则很可能无法执行这两个命令，需要pull一下代码。
+
+   使用前需要确保小系统是项目最新状态。方法有两个：
+
+   - 如果没有项目小系统，使用repo下载，则代码必然是最新的；
+
+   - 如果项目小系统已经有了，则首先到小系统根目录下的 ***.repo/manifests*** 目录下，确保分支正确，并使用 git pull 命令更新一下这个目录。然后到项目小系统目录下，执行 repo sync 命令（执行 repo sync 命令是要注意是否有报错）。
+
+     ***
+
+4. 去掉已经 merge 的项目代码
+
+   当merge的项目定制代码不再需要时，可以使用如下命令回退掉
+
+   ~~~
+   repo init -m default.xml
+   repo forall -c 'pwd && git clean -df && git checkout -- . && git checkout develop'
+   ~~~
+
+   
+
+
+### **如何确定项目是否固定了发布点**
+
+到项目小系统根目录下的.repo/manifests目录，首先使用git branch命令确定当前分支是否是项目分支，并确保当前目录是否是最新状态（可以使用git pull命令更新一下）。然后打开default.xml。找到**platform/release **和 **platform/release_user** 两行（有的项目可能只有一个）。
+
+- 如果revision的值是master，则表示没有固定发布点。
+
+- 下面这种情况，则表示固定了发布点：
+
+  ```
+  <project path="platform/release" name="hisilicon/hisi-3798M-spc060-kk-release" remote="platform" revision="740d4933a5162043fa947c72a8a7ed98d0949c06" />
+  <project path="platform/release_user" name="hisilicon/hisi-3798M-spc060-kk-release-user" remote="platform" revision="dc938c1e104f6ba21ba5879674a6947809fb4dca" />
+  ```
+
+### ReleaseNotes
+
+大系统（如Android SDK和Linux SDK等）修改代码需要书写ReleaseNotes，ReleaseNotes有如下用途：
+
+- 发布基线版本时，需要同步提供ReleaseNotes给项目部同事；
+- 大系统一般都是多个git仓库组成（有的多大几十个），通过ReleaseNotes能够快速查询大系统的所有修改，而不需要挨个仓库去查找；
+
+ReleaseNotes书写方法：
+
+1. 修改代码并提交；
+
+2. 在大系统的任意目录执行"
+
+   repo note
+
+   "命令，然后按照命令中的模板进行填写：
+
+   ```
+   132. 问题概述:
+       责任人: 
+       修改时间: 2018-01-31 11:33:18
+       详细描述:
+       修改文件及其仓库commit ID:
+       更新的库或可执行文件:
+       项目名称:
+       影响范围:
+       测试建议:
+   ```
+
+3. 提交***ReleaseNotes***，执行"***repo note push***"命令即可：
+
+
+```
+# -r 参数表示远程仓库名称，如果没有该参数，则默认为sunniwell
+# -b 参数表示分支名称，如果没有该参数，则默认为develop
+repo note push [-r remote] [-b branch]
+```
 
