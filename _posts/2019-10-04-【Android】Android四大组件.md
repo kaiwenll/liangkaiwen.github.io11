@@ -1,5 +1,9 @@
 ## Android四大组件（整理相关知识点）
-        Android 开发的四大组件分别是：活动（activity），用于表现功能；服务（service），后台运行服务，不提供界面呈现；广播接受者（Broadcast Receive），勇于接收广播；内容提供者（Content Provider），支持多个应用中存储和读取数据，相当于数据库。
+        Android 开发的四大组件分别是：
+	活动（activity），用于表现功能；
+	服务（service），后台运行服务，不提供界面呈现；
+	广播接受者（Broadcast Receive），勇于接收广播；
+	内容提供者（Content Provider），支持多个应用中存储和读取数据，相当于数据库。
 
 ### 1.活动（activity）
 
@@ -33,26 +37,27 @@ service（服务）是安卓中的四大组件之一，它通常用作在后台�
 
 不过需要注意的是，服务并不是运行在一个独立的进程当中的，而是依赖于创建服务时所在的应用程序进程。与某个应用程序进程被杀掉时，所有依赖于该进程的服务也会停止运行。另外.也不要被服务的后台概念所迷惑，实际上服务并不会自动开启线程，所有的代码都是默认运行在主线程当中的。也就是说，我们需要在服务的内部手动创建子线程，并在这里执行具体的任务，否则就有可能出现主线程被阻塞住的情况。
 
-（1）service用于在后台完成用户指定的操作。service分为两种：
+**（1）service用于在后台完成用户指定的操作。**
+	service分为两种：
 	（a）started（启动）：当应用程序组件（如activity）调用startService()方法启动服务时，服务处于started状态。
 	（b）bound（绑定）：当应用程序组件调用bindService()方法绑定到服务时，服务处于bound状态。
-(2)startService()与bindService()区别：
-		(a)started service（启动服务）是由其他组件调用startService()方法启动的，这导致服务的onStartCommand()方法被调用。当服务是started状态时，其生命周期与启动它的组件无关，并且可以在后台无限期运行，即使启动服务的组件已经被销毁。因此，服务需要在完成任务后调用stopSelf()方法停止，或者由其他组件调用stopService()方法停止。
+**(2)startService()与bindService()区别：**
+	(a)started service（启动服务）是由其他组件调用startService()方法启动的，这导致服务的onStartCommand()方法被调用。当服务是started状态时，其生命周期与启动它的组件无关，并且可以在后台无限期运行，即使启动服务的组件已经被销毁。因此，服务需要在完成任务后调用stopSelf()方法停止，或者由其他组件调用stopService()方法停止。
 	(b)使用bindService()方法启用服务，调用者与服务绑定在了一起，调用者一旦退出，服务也就终止，大有“不求同时生，必须同时死”的特点。
-(3)开发人员需要在应用程序配置文件中声明全部的service，使用<service></service>标签。
+**(3)开发人员需要在应用程序配置文件中声明全部的service，使用<service></service>标签。**
 
-(4)Service通常位于后台运行，它一般不需要与用户交互，因此Service组件没有图形用户界面。Service组件需要继承Service基类。Service组件通常用于为其他组件提供后台服务或监控其他组件的运行状态。
+**(4)Service通常位于后台运行，它一般不需要与用户交互，因此Service组件没有图形用户界面。Service组件需要继承Service基类。Service组件通常用于为其他组件提供后台服务或监控其他组件的运行状态。**
 
 定义：Service是一个专门在后台处理长时间任务的Android组件，它没有UI。它有两种启动方式，startService和bindService。
 
- 这两种启动方式的区别：
+**这两种启动方式的区别：**
 startService只是启动Service，启动它的组件（如Activity）和Service并没有关联，只有当Service调用stopSelf或者其他组件调用stopService服务才会终止。
 bindService方法启动Service，其他组件可以通过回调获取Service的代理对象和Service交互，而这两方也进行了绑定，当启动方销毁时，Service也会自动进行unBind操作，当发现所有绑定都进行了unBind时才会销毁Service。
 
-Service的onCreate回调函数可以做耗时的操作吗？
+**Service的onCreate回调函数可以做耗时的操作吗？**
 不可以，Service的onCreate是在主线程（ActivityThread）中调用的，耗时操作会阻塞UI
 
-如果需要做耗时的操作，你会怎么做？
+**如果需要做耗时的操作，你会怎么做？**
 线程和Handler方式
 是否知道IntentService，在什么场景下使用IntentService？
 
@@ -91,14 +96,13 @@ emmm看到就收集我也忘记哪是哪个网的了
 ContentProvider应用程序间非常通用的共享数据的一种方式，也是Android官方推荐的方式。Android中许多系统应用都使用该方式实现数据共享，比如通讯录、短信等。但我遇到很多做Android开发的人都不怎么使用它，觉得直接读取数据库会更简单方便。
 
 那么Android搞一个内容提供者在数据和应用之间，只是为了装高大上，故弄玄虚？我认为其设计用意在于：
-
-封装。对数据进行封装，提供统一的接口，使用者完全不必关心这些数据是在DB，XML、Preferences或者网络请求来的。当项目需求要改变数据来源时，使用我们的地方完全不需要修改。
+**封装**。对数据进行封装，提供统一的接口，使用者完全不必关心这些数据是在DB，XML、Preferences或者网络请求来的。当项目需求要改变数据来源时，使用我们的地方完全不需要修改。
 提供一种跨进程数据共享的方式。
 应用程序间的数据共享还有另外的一个重要话题，就是数据更新通知机制了。因为数据是在多个应用程序中共享的，当其中一个应用程序改变了这些共享数据的时候，它有责任通知其它应用程序，让它们知道共享数据被修改了，这样它们就可以作相应的处理。
 
 ContentResolver接口的notifyChange函数来通知那些注册了监控特定URI的ContentObserver对象，使得它们可以相应地执行一些处理。ContentObserver可以通过registerContentObserver进行注册。
 
-既然是对外提供数据共享，那么如何限制对方的使用呢？
+**既然是对外提供数据共享，那么如何限制对方的使用呢？**
 
 android:exported属性非常重要。这个属性用于指示该服务是否能够被其他应用程序组件调用或跟它交互。如果设置为true，则能够被调用或交互，否则不能。设置为false时，只有同一个应用程序的组件或带有相同用户ID的应用程序才能启动或绑定该服务。
 
@@ -141,9 +145,9 @@ android:exported属性非常重要。这个属性用于指示该服务是否能�
             <grant-uri-permission android:pathPattern=".*" />
         </provider>
 ```
-ContentProvider接口方法运行在哪个线程中呢？
+**ContentProvider接口方法运行在哪个线程中呢？**
 
-ContentProvider可以在AndroidManifest.xml中配置一个叫做android:multiprocess的属性，默认值是false，表示ContentProvider是单例的，无论哪个客户端应用的访问都将是同一个ContentProvider对象，如果设为true，系统会为每一个访问该ContentProvider的进程创建一个实例。
+ContentProvider可以在AndroidManifest.xml中配置一个叫做* android:multiprocess* 的属性，默认值是false，表示 **ContentProvider** 是单例的，无论哪个客户端应用的访问都将是同一个 **ContentProvider** 对象，如果设为true，系统会为每一个访问该 **ContentProvider** 的进程创建一个实例。
 
 这点还是比较好理解的，那如果我要问每个ContentProvider的操作是在哪个线程中运行的呢（其实我们关心的是UI线程和工作线程）？比如我们在UI线程调用getContentResolver().query查询数据，而当数据量很大时（或者需要进行较长时间的计算）会不会阻塞UI线程呢？
 
@@ -155,14 +159,14 @@ ContentProvider和调用者在不同的进程，ContentProvider的方法会运�
 
 也可以看看CursorLoader这个类的源码，看Google自己是怎么使用getContentResolver().query的。
 
-ContentProvider是如何在不同应用程序之间传输数据的？
+**ContentProvider是如何在不同应用程序之间传输数据的？**
 
 这个问题点有些深入，大家要对Binder进程间通信机制比较了解。因为之前我们有提到过一个应用进程有16个Binder线程去和远程服务进行交互，而每个线程可占用的缓存空间是128KB这样，超过会报异常。ContentResolver虽然是通过Binder进程间通信机制打通了应用程序之间共享数据的通道，但Content Provider组件在不同应用程序之间传输数据是基于匿名共享内存机制来实现的。有兴趣的可以查看一下老罗的文章Android系统匿名共享内存Ashmem（Anonymous Shared Memory）简要介绍和学习计划。
 
 
 
 
-作者：goeasyway
+*作者：goeasyway
 链接：https://www.jianshu.com/p/380231307070
 來源：简书
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。*
