@@ -1,13 +1,14 @@
-# 由于《深入理解Android 卷一》和《深入理解Android卷二》不再出版，而知识的传播不应该因为纸质媒介的问题而中断，所以我将在CSDN博客中全文转发这两本书的全部内容
+### 由于《深入理解Android 卷一》和《深入理解Android卷二》不再出版，而知识的传播不应该因为纸质媒介的问题而中断，所以我将在CSDN博客中全文转发这两本书的全部内容
 
-# 第6章 深入理解ActivityManagerService
+## 第6章 深入理解ActivityManagerService
 
-## 本章主要内容：
+### 本章主要内容：
 
 ·  详细分析ActivityManagerService
 
-## 本章所涉及的源代码文件名及位置：
+### 本章所涉及的源代码文件名及位置：
 
+```java
 ·  SystemServer.java
 
 frameworks/base/services/java/com/android/server/SystemServer.java
@@ -43,13 +44,17 @@ frameworks/base/services/java/com/android/server/am/ProcessList.java
 ·  RuntimeInit.java
 
 frameworks/base/core/java/com/android/internal/os/RuntimeInit.java
+```
 
-## 6.1  概述
+
+
+### 6.1  概述
 
 相信绝大部分读者对本书提到的ActivityManagerService（以后简称AMS）都有所耳闻。AMS是Android中最核心的服务，主要负责系统中四大组件的启动、切换、调度及应用进程的管理和调度等工作，其职责与操作系统中的进程管理和调度模块相类似，因此它在Android中非常重要。
 
 AMS是本书碰到的第一块难啃的骨头[[①\]](file:///C:/Users/innost/workspace/Android-Internal/Framework卷/卷II/定稿/第6章__深入理解ActivityManagerService（定稿-120426）.docx#_ftn1)，涉及的知识点较多。为了帮助读者更好地理解AMS，本章将带领读者按五条不同的线来分析它。
 
+```
 ·  第一条线：同其他服务一样，将分析SystemServer中AMS的调用轨迹。
 
 ·  第二条线：以am命令启动一个Activity为例，分析应用进程的创建、Activity的启动，以及它们和AMS之间的交互等知识。
@@ -57,6 +62,7 @@ AMS是本书碰到的第一块难啃的骨头[[①\]](file:///C:/Users/innost/wo
 ·  第三条线和第四条线：分别以Broadcast和Service为例，分析AMS中Broadcast和Service的相关处理流程。
 
 ·  第五条线：以一个Crash的应用进程为出发点，分析AMS如何打理该应用进程的身后事。
+```
 
 除了这五条线外，还将统一分析在这五条线中频繁出现的与AMS中应用进程的调度、内存管理等相关的知识。
 
@@ -80,10 +86,11 @@ AMS的简单介绍就到此为止，下面分析AMS。相信不少读者已经�
 
 **提示**读者们最好在桌上放一杯清茶，以保持AMS分析旅途中头脑清醒。
 
-## 6.2  初识ActivityManagerService
+### 6.2  初识ActivityManagerService
 
 AMS由SystemServer的ServerThread线程创建，提取它的调用轨迹，代码如下：
 
+```java
 [-->SystemServer.java::ServerThread的run函数]
 
 //①调用main函数，得到一个Context对象
@@ -145,6 +152,7 @@ ActivityManagerService.self().systemReady(newRunnable() {
 ​    ......//调用其他服务的systemReady函数
 
 }
+```
 
 在以上代码中，一共列出了6个重要调用及这些调用的简单说明，本节将分析除与WindowManagerService（以后简称WMS）交互的4、5外的其余四项调用。
 
@@ -154,6 +162,7 @@ ActivityManagerService.self().systemReady(newRunnable() {
 
 AMS的main函数将返回一个Context类型的对象，该对象在SystemServer中被其他服务大量使用。Context，顾名思义，代表了一种上下文环境（笔者觉得其意义和JNIEnv类似），有了这个环境，我们就可以做很多事情（例如获取该环境中的资源、Java类信息等）。那么AMS的main将返回一个怎样的上下文环境呢？来看以下代码：
 
+```java
 [-->ActivityManagerService.java::main]
 
  publicstatic final Context main(int factoryTest) {
@@ -178,17 +187,17 @@ AMS的main函数将返回一个Context类型的对象，该对象在SystemServer
 
 ​    //③得到一个Context对象，注意调用的函数名为getSystemContext，何为System Context
 
-​    Contextcontext = at.getSystemContext();
+    Contextcontext = at.getSystemContext();
 
-​    context.setTheme(android.R.style.Theme_Holo);
+    context.setTheme(android.R.style.Theme_Holo);
 
-​    m.mContext= context;
+    m.mContext= context;
 
-​    m.mFactoryTest= factoryTest;
+    m.mFactoryTest= factoryTest;
 
  
 
-​    //ActivtyStack是AMS中用来管理Activity的启动和调度的核心类，以后再分析它
+    //ActivtyStack是AMS中用来管理Activity的启动和调度的核心类，以后再分析它
 
 ​    m.mMainStack = new ActivityStack(m, context,true);
 
@@ -219,9 +228,11 @@ AMS的main函数将返回一个Context类型的对象，该对象在SystemServer
    returncontext;
 
 }
+```
 
 在main函数中，我们又列出了4个关键函数，分别是：
 
+```java
 ·  创建AThread线程。虽然AMS的main函数由ServerThread线程调用，但是AMS自己的工作并没有放在ServerThread中去做，而是新创建了一个线程，即AThread线程。
 
 ·  ActivityThread.systemMain函数。初始化ActivityThread对象。
@@ -229,6 +240,7 @@ AMS的main函数将返回一个Context类型的对象，该对象在SystemServer
 ·  ActivityThread.getSystemContext函数。用于获取一个Context对象，从函数名上看，该Context代表了System的上下文环境。
 
 ·  AMS的startRunning函数。
+```
 
 注意，main函数中有一处等待（wait）及一处通知（notifyAll），原因是：
 
@@ -244,6 +256,7 @@ AMS的main函数将返回一个Context类型的对象，该对象在SystemServer
 
 AThread的代码如下：
 
+```java
 [-->ActivityManagerService.java::AThread]
 
 static class AThread extends Thread {//AThread从Thread类派生
@@ -299,6 +312,7 @@ static class AThread extends Thread {//AThread从Thread类派生
  }
 
  }
+```
 
 从本质上说，AThread是一个支持消息循环及处理的线程，其主要工作就是创建AMS对象，然后通知AMS的main函数。这样看来，main函数等待的就是这个AMS对象。
 
@@ -306,6 +320,7 @@ static class AThread extends Thread {//AThread从Thread类派生
 
 AMS的构造函数的代码如下：
 
+```java
 [-->ActivityManagerService.java::ActivityManagerService构造]
 
 private ActivityManagerService() {
@@ -387,6 +402,7 @@ private ActivityManagerService() {
 ​    mProcessStatsThread.start();
 
  }
+```
 
 AMS的构造函数比想象得要简单些，下面回顾一下它的工作：
 
@@ -396,7 +412,7 @@ AMS的构造函数比想象得要简单些，下面回顾一下它的工作：
 
 AMS main函数的第一个关键点就分析到此，再来分析它的第二个关键点。
 
-#### 2.  ActivityThread.systemMain函数分析
+### 2.  ActivityThread.systemMain函数分析
 
 ActivityThread是Android Framework中一个非常重要的类，它代表一个应用进程的主线程（对于应用进程来说，ActivityThread的main函数确实是由该进程的主线程执行），其职责就是调度及执行在该线程中运行的四大组件。
 
@@ -406,6 +422,7 @@ ActivityThread是Android Framework中一个非常重要的类，它代表一个�
 
 该函数代码如下：
 
+```java
 [-->ActivityThread.java::systemMain]
 
 public static final ActivityThread systemMain() {
@@ -421,6 +438,7 @@ public static final ActivityThread systemMain() {
    returnthread;
 
  }
+```
 
 在分析ActivityThread的attach函数之前，先提一个问题供读者思考：前面所说的ActivityThread代表应用进程（其上运行了APK）的主线程，而SystemServer并非一个应用进程，那么为什么此处也需要ActivityThread呢？
 
@@ -434,6 +452,7 @@ public static final ActivityThread systemMain() {
 
 ##### （1） attach函数分析
 
+```java
 [-->ActivityThread.java::attach]
 
 private void attach(boolean system) {
@@ -501,14 +520,17 @@ private void attach(boolean system) {
 ​        });
 
  }
+```
 
 attach函数中出现了几个重要成员，其类型分别是Instrumentation类、Application类及Context类，它们的作用如下（为了保证准确，这里先引用Android的官方说明）。
 
+```java
 ·  Instrumentation：Base class for implementingapplication instrumentation code. When running with instrumentation turned on,this class will be instantiated for you before any of the application code,allowing you to monitor all of the interaction the system has with the application.An Instrumentation implementation is described to the system through anAndroidManifest.xml's <instrumentation> tag.大意是：Instrumentaion是一个工具类。当它被启用时，系统先创建它，再通过它来创建其他组件。另外，系统和组件之间的交互也将通过Instrumentation来传递，这样，Instrumentation就能监测系统和这些组件的交互情况了。在实际使用中，我们可以创建Instrumentation的派生类来进行相应的处理。读者可查询Android中Junit的使用来了解Intrstrumentation的作用。本书不讨论Intrstrumentation方面的内容。
 
 ·  Application：Base class for those who need tomaintain global application state. You can provide your own implementation byspecifying its name in your AndroidManifest.xml's <application> tag,which will cause that class to be instantiated for you when the process foryour application/package is created.大意是：Application类保存了一个全局的application状态。Application由AndroidManifest.xml中的<application>标签声明。在实际使用时需定义Application的派生类。
 
 ·  Context：Interface to global informationabout an application environment. This is an abstract class whoseimplementation is provided by the Android system. It allows access toapplication-specific resources and classes, as well as up-calls forapplication-level operations such as launching activities, broadcasting andreceiving intents, etc.大意是：Context是一个接口，通过它可以获取并操作Application对应的资源、类，甚至包含于Application中的四大组件。
+```
 
 **提示**此处的Application是Android中的一个概念，可理解为一种容器，它内部包含四大组件。另外，一个进程可以运行多个Application。
 
@@ -522,6 +544,7 @@ Context是一个抽象类，而由AMS创建的将是它的子类ContextImpl。�
 
 ##### （2） getSystemContext函数分析
 
+```java
 [-->ActivityThread.java::getSystemContext]
 
 public ContextImpl getSystemContext() {
@@ -559,6 +582,7 @@ public ContextImpl getSystemContext() {
 ​    returnmSystemContext;
 
 }
+```
 
 以上代码无非是先创建一个ContextImpl，然后再将其初始化（调用init函数）。为什么函数名是getSystemContext呢？因为在初始化ContextImp时使用了一个LoadedApk对象。如注释中所说，LoadedApk是Android 2.3引入的一个类，该类用于保存一些和APK相关的信息（如资源文件位置、JNI库位置等）。在getSystemContext函数中初始化ContextImpl的这个LoadedApk所代表的package名为“android”，其实就是framework-res.apk，由于该APK仅供SystemServer使用，所以此处叫getSystemContext。
 
@@ -572,11 +596,13 @@ public ContextImpl getSystemContext() {
 
 由图6-2可知：
 
+```java
 ·  先来看派生关系， ApplicationContentResolver从ConentResolver派生，它主要用于和ContentProvider打交道。ContextImpl和ContextWrapper均从Context继承，而Application则从ContextWrapper派生。
 
 ·  从社会关系角度看，ContextImpl交际面最广。它通过mResources指向Resources，mPackageInfo指向LoadedApk，mMainThread指向ActivityThread，mContentResolver指向ApplicationContentResolver。
 
 ·  ActivityThread代表主线程，它通过mInstrumentation指向Instrumentation。另外，它还保存多个Application对象。
+```
 
 **注意**在函数中有些成员变量的类型为基类类型，而在图6-2中直接指向了实际类型。
 
@@ -600,7 +626,7 @@ Android运行环境是构建在进程之上的。有Android开发经验的读者
 
 另外，ActivityThread虽然本意是代表进程的主线程，但是作为一个Java类，它的实例到底由什么线程创建，恐怕不是ActivityThread自己能做主的，所以在SystemServer中可以发现，ActivityThread对象由其他线程创建，而在应用进程中，ActivityThread将由主线程来创建。
 
-#### 3. ActivityThread.getSystemContext函数分析
+### 3. ActivityThread.getSystemContext函数分析
 
 该函数在上一节已经见过了。调用该函数后，将得到一个代表系统进程的Context对象。到底什么是Context？先来看如图6-3所示的Context家族图谱。
 
@@ -614,6 +640,7 @@ Android运行环境是构建在进程之上的。有Android开发经验的读者
 
 由图6-3可知：
 
+```java
 ·  ContextWrapper比较有意思，其在SDK中的说明为“Proxying implementation ofContext that simply delegates all of its calls to another Context. Can besubclassed to modify behavior without changing the original Context.”大概意思是：ContextWrapper是一个代理类，被代理的对象是另外一个Context。在图6-3中，被代理的类其实是ContextImpl，由ContextWrapper通过mBase成员变量指定。读者可查看ContextWrapper.java，其内部函数功能的实现最终都由mBase完成。这样设计的目的是想把ContextImpl隐藏起来。
 
 ·  Application从ContextWrapper派生，并实现了ComponentCallbacks2接口。Application中有一个LoadedApk类型的成员变量mLoadedApk。LoadedApk代表一个APK文件。由于一个AndroidManifest.xml文件只能声明一个Application标签，所以一个Application必然会和一个LoadedApk绑定。
@@ -621,11 +648,13 @@ Android运行环境是构建在进程之上的。有Android开发经验的读者
 ·  Service从ContextWrapper派生，其中Service内部成员变量mApplication指向Application（在AndroidManifest.xml中，Service只能作为Application的子标签，所以在代码中Service必然会和一个Application绑定）。
 
 ·  ContextThemeWrapper重载了和Theme（主题）相关的两个函数。这些和界面有关，所以Activity作为Android系统中的UI容器，必然也会从ContextThemeWrapper派生。与Service一样，Activity内部也通过mApplication成员变量指向Application。
+```
 
 对Context的分析先到这里，再来分析第三个关键函数startRunning。
 
-#### 4.  AMS的startRunning函数分析
+### 4.  AMS的startRunning函数分析
 
+```java
 [-->ActivityManagerService.java::startRunning]
 
 //注意调用该函数时所传递的4个参数全为null
@@ -659,12 +688,13 @@ public final void startRunning(String pkg, Stringcls, String action,
    systemReady(null);//这个函数很重要，可惜不在本次startRunning中调用
 
 }
+```
 
 startRunning函数很简单，此处不赘述。
 
 至此，ASM 的main函数所涉及的4个知识点已全部分析完。下面回顾一下AMS 的main函数的工作。
 
-#### 5.  ActivityManagerService的main函数总结
+### 5.  ActivityManagerService的main函数总结
 
 AMS的main函数的目的有两个：
 
@@ -696,6 +726,7 @@ AMS的main函数先分析到此，至于其创建的Android运行环境将在下
 
 AMS的setSystemProcess的代码如下：
 
+```java
 [-->ActivityManagerService.java::setSystemProcess]
 
 public static void setSystemProcess() {
@@ -797,6 +828,7 @@ public static void setSystemProcess() {
 ​        } ......//抛异常
 
 ​    }
+```
 
 在以上代码中列出了一个重要说明和两个关键点。
 
@@ -810,12 +842,13 @@ public static void setSystemProcess() {
 
 现在来看第一个关键点，即ActivityThread的installSystemApplicationInfo函数。
 
-#### 1.  ActivityThread的installSystemApplicationInfo函数分析
+### 1.  ActivityThread的installSystemApplicationInfo函数分析
 
 installSystemApplicationInfo函数的参数为一个ApplicationInfo对象，该对象由AMS通过Context查询PKMS中一个名为“android”的package得来（根据前面介绍的知识，目前只有framework-res.apk声明其package名为“android”）。
 
 再来看installSystemApplicationInfo的代码，如下所示：
 
+```java
 [-->ActivityThread.java::installSystemApplicationInfo]
 
 public voidinstallSystemApplicationInfo(ApplicationInfo info) {
@@ -839,6 +872,7 @@ public voidinstallSystemApplicationInfo(ApplicationInfo info) {
 ​     }
 
  }
+```
 
 在以上代码中看到调用context.init的地方，读者可能会有疑惑，getSystemContext函数将返回mSystemContext，而此mSystemContext在AMS的main函数中已经初始化过了，此处为何再次初始化呢？
 
@@ -862,7 +896,7 @@ public voidinstallSystemApplicationInfo(ApplicationInfo info) {
 
 AMS中的进程管理结构是ProcessRecord。
 
-#### 2.  关于ProcessRecord和IApplicationThread的介绍
+### 2.  关于ProcessRecord和IApplicationThread的介绍
 
 分析ProcessRecord之前，先来思考一个问题：
 
@@ -890,6 +924,7 @@ IApplicationThread的Binder服务端在应用进程中还是在AMS中？
 
 有了IApplicationThread接口，AMS就可以和应用进程交互了。例如，对于下面一个简单的函数：
 
+```java
 [-->ActivityThread.java::scheduleStopActivity]
 
 public final void scheduleStopActivity(IBindertoken, boolean showWindow,
@@ -903,6 +938,7 @@ public final void scheduleStopActivity(IBindertoken, boolean showWindow,
 ​               token, 0, configChanges);
 
  }
+```
 
 当AMS想要停止（stop）一个Activity时，会调用对应进程IApplicationThread Binder客户端的scheduleStopActivity函数。该函数服务端实现的就是向ActivityThread所在线程发送一个消息。在应用进程中，ActivityThread运行在主线程中，所以这个消息最终在主线程被处理。
 
@@ -910,6 +946,7 @@ public final void scheduleStopActivity(IBindertoken, boolean showWindow,
 
 IApplicationThread仅仅是AMS和另外一个进程交互的接口，除此之外，AMS还需要更多的有关该进程的信息。在AMS中，进程的信息都保存在ProcessRecord数据结构中。那么，ProcessRecord是什么呢？先来看setSystemProcess的第二个关键点，即newProcessRecordLocked函数，其代码如下：
 
+```java
 [-->ActivityManagerService.java::newProcessRecordLocked]
 
 final ProcessRecordnewProcessRecordLocked(IApplicationThread thread,
@@ -975,6 +1012,7 @@ ProcessRecord(BatteryStatsImpl.Uid.Proc_batteryStats,
 ​     removed= false;
 
 }
+```
 
 ProcessRecord除保存和应用进程通信的IApplicationThread对象外，还保存了进程名、不同状态对应的Oom_adj值及一个ApplicationInfo。一个进程虽然可运行多个Application，但是ProcessRecord一般保存该进程中先运行的那个Application的ApplicationInfo。
 
@@ -998,7 +1036,7 @@ AMS中有两个成员变量用于保存ProcessRecord，一个是mProcessNames，
 
 图6-6  mPidsSelfLocked和mProcessNames数据结构示意图
 
-#### 3.  AMS的setSystemProcess总结
+### 3.  AMS的setSystemProcess总结
 
 现在来总结回顾setSystemProcess的工作：
 
@@ -1016,6 +1054,7 @@ AMS中有两个成员变量用于保存ProcessRecord，一个是mProcessNames，
 
 **提示**读者在定制自己的Android系统时，万不可去掉/system/app/SettingsProvider.apk，否则系统将无法正常启动。
 
+```java
 [-->ActivityManagerService.java::installSystemProviders]
 
 public static final void installSystemProviders(){
@@ -1067,6 +1106,7 @@ public static final void installSystemProviders(){
 ​    mSelf.mUsageStatsService.monitorPackages();
 
  }
+```
 
 在代码中列出了两个关键调用，分别是：
 
@@ -1080,6 +1120,7 @@ public static final void installSystemProviders(){
 
 #### 1.  AMS的 generateApplicationProvidersLocked函数分析
 
+```java
 [-->ActivityManagerService.java::generateApplicationProvidersLocked]
 
 private final List<ProviderInfo> generateApplicationProvidersLocked(
@@ -1143,6 +1184,7 @@ private final List<ProviderInfo> generateApplicationProvidersLocked(
 ​    returnproviders;
 
  }
+```
 
 由以上代码可知：generateApplicationProvidersLocked先从PKMS那里查询满足条件的ProviderInfo信息，而后将它们分别保存到AMS和ProcessRecord中对应的数据结构中。
 
@@ -1256,10 +1298,11 @@ AMS及ProcessRecord均使用了一个新的数据结构ContentProviderRecord来�
 
 至此，Provider信息已经保存到AMS及ProcessRecord中了。那么，下一步的工作是什么呢？
 
-#### 2.  ActivityThread 的installSystemProviders函数分析
+### 2.  ActivityThread 的installSystemProviders函数分析
 
 在AMS和ProcessRecord中都保存了Provider信息，但这些仅仅都是一些信息，并不是ContentProvider，因此下面要创建一个ContentProvider实例（即SettingsProvider对象）。该工作由ActivityThread的installSystemProviders来完成，代码如下：
 
+```java
 [-->ActivityThread.java::installSystemProviders]
 
 public final void installSystemProviders(List<ProviderInfo>providers) {
@@ -1341,6 +1384,7 @@ private void installContentProviders(
  
 
 ​    }
+```
 
 installContentProviders实际上是标准的ContentProvider安装时调用的程序。安装ContentProvider包括两方面的工作：
 
