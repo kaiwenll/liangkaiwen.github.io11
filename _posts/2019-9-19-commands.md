@@ -98,3 +98,19 @@ cat /storage/external_storage/sda1/res-package.img  > /dev/block/logo
 #### 开机动画
 ./platform/release/system/media
 
+### android平台的三个编译命令----make,mm,mmm
+在android源码根目录下，执行以下三步即可编译android:
+1. build/envsetup.sh #这个脚本用来设置android的编译环境;
+2. lunch #选择编译目标
+3. make #编译android整个系统
+
+### android平台提供了三个命令用于编译，这3个命令分别为：
+```
+1. make: 不带任何参数则是编译整个系统；
+make MediaProvider： 单个模块编译，会把该模块及其依赖的其他模块一起编译(会搜索整个源代码来定位MediaProvider模块所使用的Android.mk文件，还要判断该模块依赖的其他模块是否有修改)；
+2. mmm packages/providers/MediaProvider: 编译指定目录下的模块，但不编译它所依赖的其它模块；
+3. mm: 编译当前目录下的模块，它和mmm一样，不编译依赖模块;
+4. mma: 编译当前目录下的模块及其依赖项
+以上三个命令都可以用-B选项来重新编译所有目标文件。
+```
+
