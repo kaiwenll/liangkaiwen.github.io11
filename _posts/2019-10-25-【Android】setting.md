@@ -1,7 +1,7 @@
 ## 系统数据库Settings属性使用及相关介绍
 ### 1.用途及作用:
 
- ```alps\frameworks\base\core\java\android\provider\Settings.java```
+ alps\frameworks\base\core\java\android\provider\Settings.java
 Settings下的属性实际分为System，Global等，一般作用是用于存储系统默认属性值，通过监听读写属性值的变化执行相关的逻辑修改系统属性值，也可以用于系统间跨进程通信。
 
 ### 2.基本使用:
