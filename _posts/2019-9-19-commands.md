@@ -19,7 +19,8 @@ Ctrl+i
   在VIM中进行文本替换：
 ```
 ### vim替换文本：
->    1.  替换当前行中的内容：    :s/from/to/    （s即substitude）
+>    
+    1.  替换当前行中的内容：    :s/from/to/    （s即substitude）
         :s/from/to/     ：  将当前行中的第一个from，替换成to。如果当前行含有多个
                             from，则只会替换其中的第一个。
         :s/from/to/g    ：  将当前行中的所有from都替换成to。
