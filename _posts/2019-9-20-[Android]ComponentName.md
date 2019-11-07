@@ -160,7 +160,7 @@ package name (String)：
 ```
 acitivity name (String)：
 第二个参数为目标Activity/Service 全称（包名+类名），String 格式。
-```
+```java
     String packageName = "com.example.test";
     String activityName = "com.example.test.MyActivity";
     String serviceName = "com.example.test.MyService";
@@ -179,7 +179,7 @@ acitivity name (String)：
 ```
 Tips：
 如果请求的Activity 是其他应用的入口Activity，即在Manifest中：
-```
+```xml
 <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
