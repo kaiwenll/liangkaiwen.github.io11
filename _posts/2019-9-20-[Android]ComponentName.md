@@ -145,4 +145,45 @@
      ```
 
      
+## ComponenetName ： 组件名称
+Java中可以通过Intent.setComponent(ComponentName) 来启动其他应用（项目）的Activity 或者Service 。
 
+创建ComponentName对象需要两个参数：
+
+package name (String)：
+这里的包名为String格式，一般与Manifest中的package 值相同。
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.test"
+    android:versionCode="1"
+    android:versionName="1.0" >
+```
+acitivity name (String)：
+第二个参数为目标Activity/Service 全称（包名+类名），String 格式。
+```
+    String packageName = "com.example.test";
+    String activityName = "com.example.test.MyActivity";
+    String serviceName = "com.example.test.MyService";
+
+    //启动Activity
+    Intent intentActivity = new Intent();
+    ComponentName componentNameActivity = new ComponentName(packageName ,activityName);
+    intentActivity.setComponent(componentNameActivity);
+    startActivity(intentActivity);
+
+    //启动Service
+    Intent intentService = new Intent();
+    ComponentName componentNameService = new ComponentName(packageName ,serviceName);
+    intentService.setComponent(componentNameService);
+    startActivity(intentService);
+```
+Tips：
+如果请求的Activity 是其他应用的入口Activity，即在Manifest中：
+```
+<intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+</intent-filter>
+```
+则此时默认 android:exported="true"，无需设置也可以成功调用。若不是，则需要手动添加android:exported="true"。
