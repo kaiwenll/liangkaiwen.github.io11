@@ -187,3 +187,91 @@ make MediaProvider： 单个模块编译，会把该模块及其依赖的其他�
 以上三个命令都可以用-B选项来重新编译所有目标文件。
 ```
 
+## Android系统命令
+### logcat
+#### 1、清空日志缓冲区
+logcat -c
+#### 2、抓取所有日志，在每行日志前增加时间戳
+logcat -v time
+#### 3、抓取所有日志，在每行日志前增加时间戳和线程信息
+logcat -v threadtime
+#### 4、过滤抓取日志，按xxx标签抓取
+logcat -s xxx
+#### 5、输出日志到文件
+logcat -f /sdcard/log.txt
+#### 6、logcat --help
+```
+255|root@Hi3798MV300:/ # logcat --help
+Usage: logcat [options] [filterspecs]
+options include:
+  -s              Set default filter to silent.
+                  Like specifying filterspec '*:s'
+  -f <filename>   Log to file. Default to stdout
+  -r [<kbytes>]   Rotate log every kbytes. (16 if unspecified). Requires -f
+  -n <count>      Sets max number of rotated logs to <count>, default 4
+  -v <format>     Sets the log print format, where <format> is one of:
+
+                  brief process tag thread raw time threadtime long
+
+  -c              clear (flush) the entire log and exit
+  -d              dump the log and then exit (don't block)
+  -t <count>      print only the most recent <count> lines (implies -d)
+  -g              get the size of the log's ring buffer and exit
+  -b <buffer>     Request alternate ring buffer, 'main', 'system', 'radio'
+                  or 'events'. Multiple -b parameters are allowed and the
+                  results are interleaved. The default is -b main -b system.
+  -B              output the log in binary
+filterspecs are a series of 
+  <tag>[:priority]
+
+where <tag> is a log component tag (or * for all) and priority is:
+  V    Verbose
+  D    Debug
+  I    Info
+  W    Warn
+  E    Error
+  F    Fatal
+  S    Silent (supress all output)
+
+'*' means '*:d' and <tag> by itself means <tag>:v
+
+If not specified on the commandline, filterspec is set from ANDROID_LOG_TAGS.
+If no filterspec is found, filter defaults to '*:I'
+
+If not specified with -v, format is set from ANDROID_PRINTF_LOG
+or defaults to "brief"
+```
+#### 7、多关键词抓取日志
+logcat | grep -E "1111|dddd"
+### dd命令
+DD是Linux/UNIX 下的一个非常有用的命令，作用是用指定大小的块拷贝一个文件，并在拷贝的同时进行指定的转换。
+
+#### 1、将终端的boot分区备份到/data下
+dd if=/dev/block//platform/soc/by-name/boot of=/data/boot.img
+#### 2、将/data/下的boot.img，写入到终端boot分区
+dd if=/data/boot.img of=/dev/block//platform/soc/by-name/boot
+#### 3、支持的所有参数
+```
+if=文件名：输入文件名，缺省为标准输入。即指定源文件。<if=inputfile>
+ibs=bytes：一次读入bytes个字节，即指定一个块大小为bytes个字节。
+obs=bytes：一次输出bytes个字节，即指定一个块大小为bytes个字节。
+bs=bytes：同时设置读入/输出的块大小为bytes个字节。
+cbs=bytes：一次转换bytes个字节，即指定转换缓冲区大小。
+skip=blocks：从输入文件开头跳过blocks个块后再开始复制。
+seek=blocks：从输出文件开头跳过blocks个块后再开始复制。
+注意：通常只用当输出文件是磁盘或磁带时才有效，即备份到磁盘或磁带时才有效。
+count=blocks：仅拷贝blocks个块，块大小等于ibs指定的字节数。
+conv=conversion：用指定的参数转换文件。
+ascii：转换ebcdic为ascii
+ebcdic：转换ascii为ebcdic
+ibm：转换ascii为alternateebcdic
+block：把每一行转换为长度为cbs，不足部分用空格填充
+unblock：使每一行的长度都为cbs，不足部分用空格填充
+lcase：把大写字符转换为小写字符
+ucase：把小写字符转换为大写字符
+swab：交换输入的每对字节
+noerror：出错时不停止
+notrunc：不截短输出文件
+sync：将每个输入块填充到ibs个字节，不足部分用空（NUL）字符补齐。
+of=文件名：输出文件名，缺省为标准输出。即指定目的文件。< of=output file >
+```
