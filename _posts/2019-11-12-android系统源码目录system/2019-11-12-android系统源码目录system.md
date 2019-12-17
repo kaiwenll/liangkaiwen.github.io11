@@ -26,7 +26,7 @@ svc.jar：svc命令所需jar包，可硬用来管理wifi,power和data。源码�
  以上都是自己的理解或者网上查找资料后获得的，如有误点，欢迎指出。
 http://blog.sina.com.cn/s/blog_757397730101efy7.html
 
-1.目录树
+### 1.目录树
 /framework/base/api 
 /framework/base/awt
 /framework/base/build
@@ -130,7 +130,7 @@ system serverjava可执行程式service.jar,分发到/system/framework/service.j
 system serverJNI接口实现库,libanroid_servers.so，分发到/system/lib/libanroid_servers.sosystemserverJNI接口实现库,libanroid_servers.so，分发到/system/lib/libanroid_servers.so
 
 
-启动 Zygote
+### 启动 Zygote
 -Xzygote /system/bin --zygote--start-system-server
 AndroidRuntime->AppRuntime
 int main(int argc,const char* constargv[])
@@ -148,7 +148,7 @@ int main(int argc,const char* constargv[])
 3.注册Android Runtime中的JNI接口给虚拟机；
 4.呼叫Java类com.android.internal.os.ZygoteInit的main函数
 
-在类com.android.internal.os.ZygoteInit的main函数中，
+### 在类com.android.internal.os.ZygoteInit的main函数中，
 1.注册Zygote socket用来接收请求;
 2.加载preloadedclass、resources用来加快启动速度，文件清单在framework.jar中的preloaded-classes,framework-res.apk中的res中;
 3.启动System Server;
