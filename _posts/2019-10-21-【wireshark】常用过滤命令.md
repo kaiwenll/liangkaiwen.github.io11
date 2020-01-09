@@ -1,4 +1,4 @@
-## 使用wireshark常用的过滤命令
+# 使用wireshark常用的过滤命令
 
 ### 1.过滤IP，如来源IP或者目标IP等于某个IP
 
@@ -272,13 +272,12 @@ eth.addr[0:3]==00:1e:4f 搜索过滤MAC地址前3个字节是0x001e4f的数据�
 
 
 
-## 篇二 ：wireshark入门与进阶五之常见捕获过滤器
+# 篇二 ：wireshark入门与进阶五之常见捕获过滤器
 
-本文链接：https://blog.csdn.net/qq_29277155/article/details/52077239
-0x00 前言
+### 前言
     我们都知道，wireshark可以实现本地抓包，同时Wireshark也支持remote packet capture protocol（rpcapd）协议远程抓包，只要在远程主机上安装相应的rpcapd服务例程就可以实现在本地电脑执行wireshark 捕获远程电脑的流量了。但是各种协议的流量非常巨大，如果我们捕获所有协议的流量，那么数小时内，捕获到的流量将到达几百M，甚至几G。硬盘空间很快就被填满了。所以很有必要，只捕获特定的流量或者不捕获某些流量而捕获其他所有的流量。
 
-0x02 捕捉过滤器语法
+### 捕捉过滤器语法
 语法：<Protocol>  <Direction>  <Host(s)>  < Value>  < Logical  Operations>   <Other expression>
 
 Protocol（协议）: ether，fddi， ip，arp，rarp，decnet，lat， sca，moprc，mopdl， tcp ， udp 等，如果没指明协议类型，则默认为捕捉所有支持的协议。
@@ -291,10 +290,10 @@ Logical Operations（逻辑运算）:not, and, or 等，否(“not”)具有最�
 
 
 
-0x03 常见使用的捕获过滤语句
+## 常见使用的捕获过滤语句
 
-1.1 只（不）捕获某主机的HTTP流量
-
+### 1.1 只（不）捕获某主机的HTTP流量
+```
 host 192.168.5.231 and port 80 and http#只捕获主机192.168.5.231 的http流量。注意如果你的HTTP端口为8080，把80 改为8080。
 
 port 80 and http#捕获所有经过该接口的http流量。注意如果你的HTTP端口为8080，把80 改为8080。
@@ -304,10 +303,10 @@ host 192.168.5.231 and not port 80# 捕获主机192.168.5.231除 http 之外的�
 not port 80 # 捕获除 http 之外的其他所有流量，注意如果你的HTTP端口为8080，把80 改为8080。
 
 not port 80 and !http## 捕获除 http 之外的其他所有流量，注意如果你的HTTP端口为8080，把80 改为8080。
+```
 
-
-1.2  只捕获某主机的所有流量
-
+### 1.2  只捕获某主机的所有流量
+```
 host 192.168.5.231#捕获源目主机均为192.168.5.231
 
 dst 192.168.5.231#捕获目的主机均为192.168.5.231
@@ -315,11 +314,11 @@ dst 192.168.5.231#捕获目的主机均为192.168.5.231
 src 192.168.5.231#捕获来源主机均为192.168.5.231
 
 net 192.168.5.0/24#捕获网段为d192.168.5的所有主机的所有流量
+```
 
 
-
-1.3 只捕获某主机的DNS流量
-
+### 1.3 只捕获某主机的DNS流量
+```
 host 192.168.5.231 and port 53 # 只捕获主机192.168.5.231 的dns流量。
 
 src 192.168.5.231 and port 53  #只捕获主机192.168.5.231 对外的dns 的流量。
@@ -327,12 +326,12 @@ src 192.168.5.231 and port 53  #只捕获主机192.168.5.231 对外的dns 的流
 dst 192.168.5.231 and port 53 #只捕获dns服务器相应主机192.168.5.231的dns流量。
 
 port 53          #捕获接口中的所有主机的dns流量
+```
 
 
 
-
-1.4 只（不）捕获APR流量
-
+### 1.4 只（不）捕获APR流量
+```
 host 192.168.5.231 and arp#只捕获主机192.168.5.231 的arp流量。
 
 host 192.168.5.231 and !arp #只捕获主机192.168.5.231 除arp外的所有流量。
@@ -340,41 +339,41 @@ host 192.168.5.231 and !arp #只捕获主机192.168.5.231 除arp外的所有流�
 arp#捕获接口中的所有arp请求
 
 !arp #捕获接口中所有非arpq请求。
+```
 
 
-
-1.5 只捕获特定端口的流量
-
+### 1.5 只捕获特定端口的流量
+```
 tcp portrange 8000-9000 an port 80#捕获端口8000-9000之间和80端口的流量
 
 port 5060#捕获sip流量，因为sip的默认端口是5060。举一反三：port 22 #捕获ssh流量
+```
 
 
-
-1.6 捕获电子邮件的流量
-
+### 1.6 捕获电子邮件的流量
+```
 host 192.168.5.231 and port 25      # 捕获主机192.168.5.231 的POP3协议的流量。
 
 port 25 and portrange 110-143 #因为电子邮件的协议：SMTP、POP3、IMAP4，所以捕获端口的流量。
+```
 
 
-
-1.7 捕获vlan 的流量
-
+### 1.7 捕获vlan 的流量
+```
 vlan #捕获所有vlan 的流量
 
 vlan and (host 192.168.5.0 and port 80)#捕获vlan 中主机192.168.5.0 ，前提是有vlan，在wifi中不一定可以捕获到相应的流量，局域网（公司，学校里面的网络应该有vlan)
+```
 
 
-
-1.8 捕获 PPPoE 流量
-
+### 1.8 捕获 PPPoE 流量
+```
 pppoes #捕获所有的pppoes流量
 pppoes and (host 192.168.5.231 and port 80) #捕获主机
+```
 
 
-
-1.9 更多的案例，可以参考
+#### 1.9 更多的案例，可以参考
 
 端口常识：https://svn.nmap.org/nmap/nmap-services#按键：Ctrl +f  ，进行搜索相关的协议。
 
@@ -384,7 +383,8 @@ pppoes and (host 192.168.5.231 and port 80) #捕获主机
 
 
 
-0x04 综合实例
+#### 综合实例
+```
 #蠕虫的捕获过滤器
 
 Blaster worm:dst port 135 and tcp port 135 and ip[2:2]==48
@@ -392,10 +392,9 @@ Blaster worm:dst port 135 and tcp port 135 and ip[2:2]==48
 Welchia worm:icmp[icmptype]==icmp-echo and ip[2:2]==92 and icmp[8:4]==0xAAAAAAAA
 
 worm:dst port 135 or dst port 445 or dst port 1433  and tcp[tcpflags] & (tcp-syn) != 0 and tcp[tcpflags] & (tcp-ack) = 0 and src net 192.168.0.0/24
+```
 
-
-
-0x05  参考资料
+####  参考资料
 https://wiki.wireshark.org/CaptureFilters#Useful_Filters
 
 http://www.tcpdump.org/tcpdump_man.html
@@ -408,7 +407,4 @@ https://www.wireshark.org/docs/wsug_html_chunked/ChCapCaptureFilterSection.html
 
 
 
-欢迎大家分享更好的思路，热切期待^^_^^ !
-————————————————
-版权声明：本文为CSDN博主「煜铭2011」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
-原文链接：https://blog.csdn.net/qq_29277155/article/details/52077239
+### 欢迎大家分享更好的思路，热切期待^^_^^ !
